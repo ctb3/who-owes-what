@@ -45,6 +45,24 @@ describe("shareOf", () => {
       shareOf(expense("alice", 1000, { mode: "exact", amounts: { alice: 400, bob: 600 } }), ids),
     ).toEqual({ alice: 400, bob: 600 });
   });
+
+  it("hands rounding cents to the payer, keeping everyone else even", () => {
+    // $10 three ways doesn't divide evenly. Bob and Carol owe a clean $3.33;
+    // Alice (who paid) absorbs the leftover cent.
+    expect(shareOf(expense("alice", 1000), ids)).toEqual({
+      alice: 334,
+      bob: 333,
+      carol: 333,
+    });
+  });
+
+  it("shorts the payer even when they aren't in the split", () => {
+    // Alice paid for something only Bob and Carol used; $10 / 2 is clean, but
+    // an odd amount leaves a cent, and it lands on Alice, not a participant.
+    expect(
+      shareOf(expense("alice", 1001, { mode: "equal", personIds: ["bob", "carol"] }), ids),
+    ).toEqual({ bob: 500, carol: 500, alice: 1 });
+  });
 });
 
 describe("personBalances", () => {
@@ -119,6 +137,26 @@ describe("partyBalances with couples", () => {
     for (const balance of partyBalances(event)) {
       expect(balance.net).toBe(0);
     }
+  });
+
+  it("keeps non-payers even when the total divides cleanly across two expenses", () => {
+    // The reported bug: carl paid $100 and macy paid $50 across 6 people. $150/6
+    // is exactly $25, but splitting each expense on its own used to leave the
+    // same people owing $25.01 while others owed $24.99. With the payer soaking
+    // up the odd cents, everyone who didn't pay owes the same clean amount.
+    const event = makeEvent(["Carl", "Meghan", "Hunter", "Eric", "Macy", "Stephen"], {
+      couples: [{ id: "cm", memberIds: ["carl", "macy"] }],
+      expenses: [expense("carl", 10000), expense("macy", 5000)],
+    });
+    const owed = new Map(personBalances(event).map((b) => [b.personId, b.owed]));
+    for (const id of ["meghan", "hunter", "eric", "stephen"]) {
+      expect(owed.get(id)).toBe(2499);
+    }
+    // The couple that paid absorbs the four leftover cents between them.
+    expect(owed.get("carl")! + owed.get("macy")!).toBe(2503 + 2501);
+
+    const couple = partyBalances(event).find((b) => b.party.id === "cm")!;
+    expect(couple.net).toBe(9996);
   });
 
   it("still counts a person whose couple references someone who left", () => {

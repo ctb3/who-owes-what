@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { partyBalances, personBalances } from "../balances";
-import { minimizeTransfers } from "../settle";
+import { settleEvent } from "../settle";
 import type { EventDoc } from "../types";
 
 /**
@@ -67,9 +67,9 @@ describe("worked trip example", () => {
   });
 
   it("settles in two payments, neither inside the couple", () => {
-    expect(minimizeTransfers(partyBalances(trip))).toEqual([
-      { from: "dave", to: "alice", amount: 5000 },
+    expect(settleEvent(trip)).toEqual([
       { from: "c1", to: "alice", amount: 2000 },
+      { from: "dave", to: "alice", amount: 5000 },
     ]);
   });
 
@@ -81,6 +81,6 @@ describe("worked trip example", () => {
         { id: "p2", from: "c1", to: "alice", amount: 2000, date: "2026-07-22" },
       ],
     };
-    expect(minimizeTransfers(partyBalances(settled))).toEqual([]);
+    expect(settleEvent(settled)).toEqual([]);
   });
 });

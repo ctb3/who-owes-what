@@ -2,20 +2,21 @@
 
 import { useMemo } from "react";
 import { useEvent } from "./EventProvider";
-import { partyBalances, personBalances } from "@/lib/balances";
+import { personBalances } from "@/lib/balances";
 import { newId, today } from "@/lib/ids";
 import { formatMoney } from "@/lib/money";
-import { minimizeTransfers } from "@/lib/settle";
+import { partiesFor } from "@/lib/parties";
+import { settleEvent } from "@/lib/settle";
 
 export default function BalancesTab() {
   const { event, update } = useEvent();
 
-  const balances = useMemo(() => partyBalances(event), [event]);
-  const transfers = useMemo(() => minimizeTransfers(balances), [balances]);
+  const transfers = useMemo(() => settleEvent(event), [event]);
   const perPerson = useMemo(() => personBalances(event), [event]);
+  const parties = useMemo(() => partiesFor(event), [event]);
 
   const nameOfParty = (id: string) =>
-    balances.find((b) => b.party.id === id)?.party.name ?? "someone";
+    parties.find((p) => p.id === id)?.name ?? "someone";
   const money = (cents: number) => formatMoney(cents, event.currency);
 
   if (event.people.length === 0) {
