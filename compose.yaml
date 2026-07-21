@@ -1,0 +1,38 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/data"]
+    working_dir: /home/dynamodblocal
+    user: root
+    ports:
+      - "8000:8000"
+    volumes:
+      - dynamodb-data:/data
+
+  create-table:
+    image: node:22-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      DDB_ENDPOINT: http://dynamodb:8000
+    command: ["npm", "run", "create-table"]
+    depends_on:
+      - dynamodb
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      TABLE_NAME: WhoOwesWhat
+      DDB_ENDPOINT: http://dynamodb:8000
+      AWS_REGION: us-east-1
+      # Local-only signing key. Production reads this from Secrets Manager.
+      APP_SECRET: local-dev-secret-not-for-production
+    depends_on:
+      create-table:
+        condition: service_completed_successfully
+
+volumes:
+  dynamodb-data:
