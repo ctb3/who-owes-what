@@ -40,4 +40,15 @@ variable "github_repo" {
   default     = "ctb3/who-owes-what"
 }
 
+variable "github_repo_immutable" {
+  description = <<-EOT
+    Immutable-id form of the repo used in the OIDC subject when GitHub's
+    immutable subject claims are on: owner@<owner-id>/name@<repo-id>.
+    Read it from a CloudTrail AssumeRoleWithWebIdentity event's userName, or
+    leave "" to trust only the plain owner/repo form.
+  EOT
+  type        = string
+  default     = "ctb3@38980432/who-owes-what@1308194567"
+}
+
 data "aws_caller_identity" "current" {}

@@ -21,11 +21,17 @@ data "aws_iam_policy_document" "assume_by_github" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Only this repository, and only from a branch (not a fork's pull request).
+    # Only this repository. Two subject shapes are allowed because the repo has
+    # GitHub's immutable subject claims on, which embeds numeric login/repo ids
+    # (repo:owner@<id>/name@<id>:...). Keeping the plain form too means the trust
+    # survives that setting being turned off. StringLike matches if either does.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:*"]
+      values = concat(
+        ["repo:${var.github_repo}:*"],
+        var.github_repo_immutable != "" ? ["repo:${var.github_repo_immutable}:*"] : [],
+      )
     }
   }
 }
