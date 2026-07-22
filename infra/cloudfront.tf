@@ -15,6 +15,7 @@ resource "aws_cloudfront_distribution" "app" {
   comment         = var.project
   price_class     = "PriceClass_100"
   is_ipv6_enabled = true
+  aliases         = [var.domain_name]
 
   origin {
     domain_name              = replace(replace(aws_lambda_function_url.app.function_url, "https://", ""), "/", "")
@@ -60,7 +61,9 @@ resource "aws_cloudfront_distribution" "app" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = aws_acm_certificate_validation.app.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 }
 
