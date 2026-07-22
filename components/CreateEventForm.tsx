@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiSend } from "@/lib/api";
 import { rememberEvent } from "@/lib/recent";
 
 export default function CreateEventForm() {
@@ -18,14 +19,10 @@ export default function CreateEventForm() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/events", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          currency,
-          ...(usePassphrase && passphrase ? { passphrase } : {}),
-        }),
+      const res = await apiSend("/api/events", "POST", {
+        name: name.trim(),
+        currency,
+        ...(usePassphrase && passphrase ? { passphrase } : {}),
       });
       if (!res.ok) throw new Error("Could not create the event");
       const body = (await res.json()) as { id: string; name: string };

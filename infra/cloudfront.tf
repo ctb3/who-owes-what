@@ -38,7 +38,7 @@ resource "aws_cloudfront_distribution" "app" {
     compress               = true
 
     cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.to_lambda.id
   }
 
   # Build assets carry a content hash in the path, so they never change.
@@ -72,8 +72,27 @@ data "aws_cloudfront_cache_policy" "optimized" {
   name = "Managed-CachingOptimized"
 }
 
-# Forwards cookies, query strings, and headers — but not Host, which must stay
-# the Lambda URL's own hostname for the SigV4 signature to verify.
-data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
-  name = "Managed-AllViewerExceptHostHeader"
+# Forward everything the app needs, but drop two headers on purpose:
+#   - Host: must stay the Lambda URL's own hostname or the SigV4 signature fails.
+#   - Authorization: OAC signs the origin request by *adding* an Authorization
+#     header, but it will not overwrite one that's being forwarded. The managed
+#     AllViewerExceptHostHeader policy forwards Authorization, so the signature
+#     never got attached and Lambda saw an unsigned request (403 Forbidden).
+resource "aws_cloudfront_origin_request_policy" "to_lambda" {
+  name = "${var.project}-to-lambda"
+
+  headers_config {
+    header_behavior = "allExcept"
+    headers {
+      items = ["host", "authorization"]
+    }
+  }
+
+  cookies_config {
+    cookie_behavior = "all"
+  }
+
+  query_strings_config {
+    query_string_behavior = "all"
+  }
 }

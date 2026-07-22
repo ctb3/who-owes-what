@@ -82,3 +82,9 @@ AWS_PROFILE=ctb3-general-admin terraform -chdir=infra apply -var="image_digest=s
 - The event URL is the only credential by default. Anyone with it can read and edit.
 - A passphrase, if set, is stored scrypt-hashed with a per-event salt. Unlocking sets an
   HMAC-signed, HttpOnly cookie scoped to that one event; failed attempts are rate limited.
+- The Lambda function URL only accepts requests signed by CloudFront (Origin Access
+  Control). Two non-obvious requirements of that setup: the CloudFront principal needs
+  `lambda:InvokeFunction` *in addition to* `lambda:InvokeFunctionUrl` (an AWS requirement
+  since October 2025), and POST/PUT requests must carry an `x-amz-content-sha256` header
+  with the body's SHA-256, because CloudFront won't hash bodies itself. The app's fetch
+  wrapper (`lib/api.ts`) adds that header; any external client (curl, scripts) must too.

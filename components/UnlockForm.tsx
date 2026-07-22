@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiSend } from "@/lib/api";
 
 export default function UnlockForm({ eventId }: { eventId: string }) {
   const router = useRouter();
@@ -13,11 +14,7 @@ export default function UnlockForm({ eventId }: { eventId: string }) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await fetch(`/api/events/${eventId}/unlock`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ passphrase }),
-    });
+    const res = await apiSend(`/api/events/${eventId}/unlock`, "POST", { passphrase });
     if (res.ok) {
       router.refresh();
       return;

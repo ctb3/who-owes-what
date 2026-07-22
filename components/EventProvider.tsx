@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { apiSend } from "@/lib/api";
 import { rememberEvent } from "@/lib/recent";
 import type { EventDoc } from "@/lib/types";
 
@@ -53,11 +54,7 @@ export function EventProvider({
     if (!doc) return;
     setSaveState("saving");
     try {
-      const res = await fetch(`/api/events/${doc.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...doc, id: undefined }),
-      });
+      const res = await apiSend(`/api/events/${doc.id}`, "PUT", { ...doc, id: undefined });
       if (!res.ok) throw new Error(await res.text());
       // Only clear the pending doc if nothing newer arrived mid-flight.
       if (pending.current === doc) {

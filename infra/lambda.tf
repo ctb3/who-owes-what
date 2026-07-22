@@ -86,7 +86,10 @@ resource "aws_lambda_function_url" "app" {
   authorization_type = "AWS_IAM"
 }
 
-# Only CloudFront may invoke the function URL.
+# Only CloudFront may invoke the function URL. Since October 2025, OAC-signed
+# requests to function URLs are authorized against BOTH actions — without
+# InvokeFunction alongside InvokeFunctionUrl, every request 403s before the
+# handler runs.
 resource "aws_lambda_permission" "cloudfront" {
   statement_id           = "AllowCloudFront"
   action                 = "lambda:InvokeFunctionUrl"
@@ -94,4 +97,12 @@ resource "aws_lambda_permission" "cloudfront" {
   principal              = "cloudfront.amazonaws.com"
   source_arn             = aws_cloudfront_distribution.app.arn
   function_url_auth_type = "AWS_IAM"
+}
+
+resource "aws_lambda_permission" "cloudfront_invoke" {
+  statement_id  = "AllowCloudFrontInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.app.function_name
+  principal     = "cloudfront.amazonaws.com"
+  source_arn    = aws_cloudfront_distribution.app.arn
 }
