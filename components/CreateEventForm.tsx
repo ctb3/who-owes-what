@@ -43,7 +43,7 @@ export default function CreateEventForm() {
         <input
           id="event-name"
           className="input"
-          placeholder="Tahoe weekend"
+          placeholder="Camping 2026"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -76,7 +76,7 @@ export default function CreateEventForm() {
             checked={usePassphrase}
             onChange={(e) => setUsePassphrase(e.target.checked)}
           />
-          Require a passphrase to open
+          Require passphrase
         </label>
         {usePassphrase && (
           <input
@@ -96,11 +96,6 @@ export default function CreateEventForm() {
       <button className="btn-primary w-full" type="submit" disabled={busy}>
         {busy ? "Creating…" : "Create event"}
       </button>
-
-      <p className="text-xs text-muted">
-        The link to your event is the only key to it. Save it somewhere &mdash; anyone with the
-        link can view and edit.
-      </p>
     </form>
   );
 }

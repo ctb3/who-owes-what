@@ -21,6 +21,9 @@ export default function RecentEvents() {
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted mb-2">
         Your events
       </h2>
+      <p className="mt-2 text-xs text-muted">
+        Remembered on this device only. Removing one here does not delete the event.
+      </p>
       <ul className="card divide-y divide-line">
         {events.map((event) => (
           <li key={event.id} className="flex items-center gap-3 px-4 py-3">
@@ -40,9 +43,6 @@ export default function RecentEvents() {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs text-muted">
-        Remembered on this device only. Removing one here does not delete the event.
-      </p>
     </section>
   );
 }

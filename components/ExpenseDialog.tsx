@@ -146,7 +146,7 @@ export default function ExpenseDialog({
             className="input"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Groceries"
+            placeholder="Drinks"
             maxLength={200}
             autoFocus
           />
@@ -217,8 +217,7 @@ export default function ExpenseDialog({
 
           {mode === "all" && (
             <p className="text-xs text-muted">
-              Everyone in the event splits this evenly. People added later are included
-              automatically.
+              Everyone in the event splits this evenly. 
             </p>
           )}
 

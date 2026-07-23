@@ -7,8 +7,7 @@ export default function Home() {
       <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Who Owes What</h1>
         <p className="mt-2 text-muted">
-          Split expenses with friends. No accounts &mdash; each event lives at its own secret
-          link.
+          Split expenses amongst a group
         </p>
       </header>
 

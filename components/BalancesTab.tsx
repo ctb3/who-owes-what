@@ -92,12 +92,6 @@ export default function BalancesTab() {
             );
           })}
         </ul>
-        {event.couples.length > 0 && (
-          <p className="mt-2 text-xs text-muted">
-            Couples still pay two full shares. Above is per person; the settlement list groups
-            each couple into one payment.
-          </p>
-        )}
       </section>
 
       {event.payments.length > 0 && (
