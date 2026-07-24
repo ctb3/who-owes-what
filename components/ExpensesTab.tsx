@@ -27,7 +27,7 @@ export default function ExpensesTab() {
   if (event.people.length === 0) {
     return (
       <p className="text-sm text-muted">
-        Add people on the People tab first &mdash; expenses need someone to split between.
+        Add people on the People tab first
       </p>
     );
   }
