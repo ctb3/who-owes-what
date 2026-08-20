@@ -3,19 +3,19 @@ resource "random_password" "app_secret" {
   special = false
 }
 
-resource "aws_secretsmanager_secret" "app_secret" {
-  name                    = "${var.project}/app-secret"
-  description             = "HMAC key for event access cookies"
-  recovery_window_in_days = 7
-}
-
-resource "aws_secretsmanager_secret_version" "app_secret" {
-  secret_id     = aws_secretsmanager_secret.app_secret.id
-  secret_string = random_password.app_secret.result
+# SSM Standard-tier SecureString: no storage charge, and the default
+# alias/aws/ssm managed key has no monthly fee. Do not set key_id — a
+# customer-managed key would cost $1/month, more than the Secrets Manager
+# secret this replaces.
+resource "aws_ssm_parameter" "app_secret" {
+  name        = "/${var.project}/app-secret"
+  description = "HMAC key for event access cookies"
+  type        = "SecureString"
+  value       = random_password.app_secret.result
 
   # Rotating this would sign every existing access cookie out at once.
   lifecycle {
-    ignore_changes = [secret_string]
+    ignore_changes = [value]
   }
 }
 
@@ -70,8 +70,9 @@ resource "aws_lambda_function" "app" {
   environment {
     variables = {
       TABLE_NAME = aws_dynamodb_table.events.name
-      # Read at cold start, never logged.
-      APP_SECRET                   = aws_secretsmanager_secret_version.app_secret.secret_string
+      # Resolved by Terraform at apply time and stored as a plain env var;
+      # the function makes no SSM call at runtime.
+      APP_SECRET                   = aws_ssm_parameter.app_secret.value
       NODE_ENV                     = "production"
       AWS_LWA_INVOKE_MODE          = "buffered"
       AWS_LWA_READINESS_CHECK_PATH = "/api/health"
