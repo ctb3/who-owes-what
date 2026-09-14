@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiSend } from "@/lib/api";
+import { rememberPassphrase } from "@/lib/recent";
 
 export default function UnlockForm({ eventId }: { eventId: string }) {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function UnlockForm({ eventId }: { eventId: string }) {
     setError(null);
     const res = await apiSend(`/api/events/${eventId}/unlock`, "POST", { passphrase });
     if (res.ok) {
+      rememberPassphrase(eventId, passphrase);
       router.refresh();
       return;
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ConfirmDialog from "./ConfirmDialog";
 import { useEvent } from "./EventProvider";
 import { newId } from "@/lib/ids";
 import { displayCoupleName } from "@/lib/parties";
@@ -10,6 +11,7 @@ export default function PeopleTab() {
   const { event, update } = useEvent();
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<Person | null>(null);
 
   const coupleOf = useMemo(() => {
     const map = new Map<string, string>();
@@ -48,12 +50,17 @@ export default function PeopleTab() {
     }));
   }
 
-  function remove(person: Person) {
+  function askRemove(person: Person) {
     if (usedPersonIds.has(person.id)) {
       setError(`${person.name} appears in an expense. Remove or edit those first.`);
       return;
     }
     setError(null);
+    setRemoving(person);
+  }
+
+  function remove(person: Person) {
+    setRemoving(null);
     update((draft) => ({
       ...draft,
       people: draft.people.filter((p) => p.id !== person.id),
@@ -99,7 +106,7 @@ export default function PeopleTab() {
               <button
                 type="button"
                 className="text-xs text-muted hover:text-negative"
-                onClick={() => remove(person)}
+                onClick={() => askRemove(person)}
               >
                 Remove
               </button>
@@ -109,6 +116,16 @@ export default function PeopleTab() {
       )}
 
       <CouplesSection unpaired={unpaired} />
+
+      {removing && (
+        <ConfirmDialog
+          title={`Remove ${removing.name}?`}
+          message="Their couple pairing and any recorded settle-ups go with them."
+          confirmLabel="Remove"
+          onCancel={() => setRemoving(null)}
+          onConfirm={() => remove(removing)}
+        />
+      )}
     </div>
   );
 }

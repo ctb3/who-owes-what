@@ -13,15 +13,21 @@ import type { EventDoc } from "@/lib/types";
 const TABS = ["Expenses", "People", "Balances"] as const;
 type Tab = (typeof TABS)[number];
 
-export default function EventShell({ initial }: { initial: EventDoc }) {
+export default function EventShell({
+  initial,
+  isProtected,
+}: {
+  initial: EventDoc;
+  isProtected: boolean;
+}) {
   return (
     <EventProvider initial={initial}>
-      <Inner />
+      <Inner isProtected={isProtected} />
     </EventProvider>
   );
 }
 
-function Inner() {
+function Inner({ isProtected }: { isProtected: boolean }) {
   const { event } = useEvent();
   const [tab, setTab] = useState<Tab>("Expenses");
 
@@ -35,7 +41,7 @@ function Inner() {
           <h1 className="text-2xl font-semibold tracking-tight">{event.name}</h1>
           <SaveIndicator />
         </div>
-        <ShareLink />
+        <ShareLink isProtected={isProtected} />
       </header>
 
       <nav className="mb-5 flex gap-1 rounded-lg border border-line bg-surface p-1">

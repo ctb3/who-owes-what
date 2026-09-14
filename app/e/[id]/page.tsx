@@ -15,5 +15,5 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
     return <UnlockForm eventId={id} />;
   }
 
-  return <EventShell initial={stored.doc} />;
+  return <EventShell initial={stored.doc} isProtected={Boolean(stored.passphrase)} />;
 }

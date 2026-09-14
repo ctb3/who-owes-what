@@ -65,4 +65,28 @@ export function rememberEvent(id: string, name: string): void {
 export function forgetEvent(id: string): void {
   if (typeof window === "undefined") return;
   write(loadRecent().filter((e) => e.id !== id));
+  try {
+    window.localStorage.removeItem(passphraseKey(id));
+  } catch {}
+}
+
+/**
+ * The server only keeps a hash, so the passphrase is remembered here (on the
+ * device that created or unlocked the event) purely so it can be shared along
+ * with the link.
+ */
+const passphraseKey = (id: string) => `wow.passphrase.${id}`;
+
+export function rememberPassphrase(id: string, passphrase: string): void {
+  try {
+    window.localStorage.setItem(passphraseKey(id), passphrase);
+  } catch {}
+}
+
+export function loadPassphrase(id: string): string | null {
+  try {
+    return window.localStorage.getItem(passphraseKey(id));
+  } catch {
+    return null;
+  }
 }

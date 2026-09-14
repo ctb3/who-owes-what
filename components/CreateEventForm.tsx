@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiSend } from "@/lib/api";
-import { rememberEvent } from "@/lib/recent";
+import { rememberEvent, rememberPassphrase } from "@/lib/recent";
 
 export default function CreateEventForm() {
   const router = useRouter();
@@ -27,6 +27,7 @@ export default function CreateEventForm() {
       if (!res.ok) throw new Error("Could not create the event");
       const body = (await res.json()) as { id: string; name: string };
       rememberEvent(body.id, body.name);
+      if (usePassphrase && passphrase) rememberPassphrase(body.id, passphrase);
       router.push(`/e/${body.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

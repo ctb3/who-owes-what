@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import ConfirmDialog from "./ConfirmDialog";
 import { useEvent } from "./EventProvider";
 import ExpenseDialog from "./ExpenseDialog";
+import { describeSplit, expensesAsCsv, expensesAsText } from "@/lib/export";
 import { formatMoney } from "@/lib/money";
 import type { Expense } from "@/lib/types";
 
 export default function ExpensesTab() {
   const { event, update } = useEvent();
   const [editing, setEditing] = useState<Expense | "new" | null>(null);
+  const [deleting, setDeleting] = useState<Expense | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const total = event.expenses.reduce((sum, e) => sum + e.amount, 0);
   const sorted = [...event.expenses].sort(
@@ -16,12 +20,22 @@ export default function ExpensesTab() {
   );
   const nameOf = (id: string) => event.people.find((p) => p.id === id)?.name ?? "someone";
 
-  function splitLabel(expense: Expense): string {
-    const split = expense.split;
-    if (split.mode === "all") return `split between everyone (${event.people.length})`;
-    if (split.mode === "equal") return `split between ${split.personIds.length}`;
-    if (split.mode === "shares") return `split by shares (${Object.keys(split.shares).length})`;
-    return `custom amounts (${Object.keys(split.amounts).length})`;
+  async function copyList() {
+    await navigator.clipboard.writeText(expensesAsText(event));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  function downloadCsv() {
+    // BOM so Excel reads names and descriptions as UTF-8.
+    const blob = new Blob(["\uFEFF", expensesAsCsv(event)], { type: "text/csv;charset=utf-8" });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = `${event.name.replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "") || "event"}-expenses.csv`;
+    link.click();
+    // Revoking right away can cancel the download in Safari.
+    setTimeout(() => URL.revokeObjectURL(href), 1000);
   }
 
   if (event.people.length === 0) {
@@ -34,15 +48,27 @@ export default function ExpensesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted">
           {event.expenses.length} expense{event.expenses.length === 1 ? "" : "s"} &middot;{" "}
           <span className="font-medium text-foreground">{formatMoney(total, event.currency)}</span>{" "}
           total
         </p>
-        <button className="btn-primary" type="button" onClick={() => setEditing("new")}>
-          Add expense
-        </button>
+        <div className="flex gap-2">
+          {sorted.length > 0 && (
+            <>
+              <button className="btn-ghost" type="button" onClick={copyList}>
+                {copied ? "Copied" : "Copy list"}
+              </button>
+              <button className="btn-ghost" type="button" onClick={downloadCsv}>
+                Export CSV
+              </button>
+            </>
+          )}
+          <button className="btn-primary" type="button" onClick={() => setEditing("new")}>
+            Add expense
+          </button>
+        </div>
       </div>
 
       {sorted.length === 0 ? (
@@ -61,7 +87,7 @@ export default function ExpensesTab() {
                 </span>
                 <span className="block text-xs text-muted">
                   {nameOf(expense.paidBy)} paid &middot; {expense.date} &middot;{" "}
-                  {splitLabel(expense)}
+                  {describeSplit(expense.split, event.people.length)}
                 </span>
               </button>
               <span className="shrink-0 tabular-nums font-medium">
@@ -70,12 +96,7 @@ export default function ExpensesTab() {
               <button
                 type="button"
                 className="shrink-0 text-xs text-muted hover:text-negative"
-                onClick={() =>
-                  update((draft) => ({
-                    ...draft,
-                    expenses: draft.expenses.filter((e) => e.id !== expense.id),
-                  }))
-                }
+                onClick={() => setDeleting(expense)}
               >
                 Delete
               </button>
@@ -88,6 +109,22 @@ export default function ExpensesTab() {
         <ExpenseDialog
           expense={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
+        />
+      )}
+
+      {deleting && (
+        <ConfirmDialog
+          title="Delete this expense?"
+          message={`${deleting.description || "Expense"} · ${formatMoney(deleting.amount, event.currency)}. This can't be undone.`}
+          onCancel={() => setDeleting(null)}
+          onConfirm={() => {
+            const id = deleting.id;
+            update((draft) => ({
+              ...draft,
+              expenses: draft.expenses.filter((e) => e.id !== id),
+            }));
+            setDeleting(null);
+          }}
         />
       )}
     </div>
